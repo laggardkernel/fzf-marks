@@ -75,7 +75,12 @@ function redraw-prompt {
     for precmd in $precmd_functions; do
         $precmd
     done
-    zle reset-prompt
+    # .reset-prompt: bypass the zsh-syntax-highlighting wrapper
+    # https://github.com/sorin-ionescu/prezto/issues/1026
+    # https://github.com/zsh-users/zsh-autosuggestions/issues/107#issuecomment-183824034
+    # -R: redisplay the prompt to avoid old prompts being eaten up
+    # https://github.com/Powerlevel9k/powerlevel9k/pull/1176#discussion_r299303453
+    zle .reset-prompt && zle -R
 }
 zle -N redraw-prompt
 
@@ -102,7 +107,7 @@ function fzm {
         --select-1 \
         --tac)
     if [[ -z "$lines" ]]; then
-        zle && zle redraw-prompt
+        zle && zle .reset-prompt && zle -R
         return 1
     fi
 
@@ -131,6 +136,7 @@ function jump {
             echo "${jumpline}" >> "${FZF_MARKS_FILE}"
         fi
     fi
+    # redraw (recall all precmd funcs) after cwd is changed
     zle && zle redraw-prompt
 }
 
@@ -153,7 +159,7 @@ function dmark {
             || echo "** The following marks have been deleted **"
         echo "${marks_to_delete}" | _color_marks
     fi
-    zle && zle reset-prompt
+    zle && zle .reset-prompt && zle -R
 }
 
 zle -N jump
